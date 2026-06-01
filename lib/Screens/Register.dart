@@ -12,30 +12,67 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  Future postRegister(
+  bool _obscurePassword = true;
+
+  Future<Map<String, dynamic>?> postRegister(
       String nama, String profesi, String email, String password) async {
     var dio = Dio();
 
-    dynamic data = {
-      "nama": nama,
-      "profesi": profesi,
-      "email": email,
-      "password": password,
-      "role_id": "2"
-    };
-
     try {
-      final response = await dio.post("$url/user_post.php",
-          data: data,
-          options: Options(headers: {'Content-type': 'application/json'}));
+      final response = await dio.post(
+        "$url/user_post.php",
+        data: {
+          "nama": nama,
+          "profesi": profesi,
+          "email": email,
+          "password": password,
+          "role_id": "2"
+        },
+        options: Options(
+          headers: {'Content-type': 'application/json'},
+          receiveTimeout: Duration(seconds: 30),
+          sendTimeout: Duration(seconds: 30),
+        ),
+      );
 
       print("Respon -> ${response.data} + ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        return response.data;
+        return {
+          "success": true,
+          "data": response.data,
+          "message": response.data['message'] ?? 'Berhasil Registrasi'
+        };
+      } else {
+        return {
+          "success": false,
+          "message": response.data['message'] ?? 'Terjadi kesalahan'
+        };
       }
+    } on DioException catch (e) {
+      String errorMessage = 'Gagal terhubung ke server';
+
+      if (e.type == DioExceptionType.connectionTimeout) {
+        errorMessage = 'Koneksi timeout';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMessage = 'Tidak ada koneksi internet';
+      } else if (e.response != null) {
+        // Ambil pesan error dari server jika ada
+        errorMessage = e.response?.data?['message'] ??
+                       e.response?.statusMessage ??
+                       'Error ${e.response?.statusCode}';
+      }
+
+      return {
+        "success": false,
+        "message": errorMessage,
+        "isNetworkError": e.type == DioExceptionType.connectionError
+      };
     } catch (e) {
-      print("Failed To Load $e");
+      return {
+        "success": false,
+        "message": "Error: ${e.toString()}"
+      };
     }
   }
 
@@ -89,16 +126,32 @@ class _RegisterState extends State<Register> {
                   SizedBox(
                     height: 20,
                   ),
-                  FormBuilderTextField(
-                    obscureText:
-                        true, // <-- Buat bikin setiap inputan jadi bintang " * "
-                    name: "password",
-                    controller: passwordController,
-
-                    decoration: InputDecoration(
-                        contentPadding: EdgeInsets.only(left: 10),
-                        border: OutlineInputBorder(),
-                        labelText: "Password"),
+                  StatefulBuilder(
+                    builder: (context, setState) {
+                      return FormBuilderTextField(
+                        obscureText: _obscurePassword,
+                        name: "password",
+                        controller: passwordController,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.only(left: 10, right: 10),
+                          border: OutlineInputBorder(),
+                          labelText: "Password",
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Color(0xFF1976D2),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   SizedBox(
                     height: 30,
@@ -107,37 +160,43 @@ class _RegisterState extends State<Register> {
                     width: MediaQuery.of(context).size.width,
                     child: ElevatedButton(
                         onPressed: () async {
-                          await postRegister(
-                                  nameController.text,
-                                  profesiController.text,
-                                  emailController.text,
-                                  passwordController.text)
-                              .then((value) => {
-                                    if (value != null)
-                                      {
-                                        setState(() {
-                                          Navigator.pop(context);
-                                          Flushbar(
-                                            message: "Berhasil Registrasi",
-                                            duration: Duration(seconds: 2),
-                                            backgroundColor: Colors.greenAccent,
-                                            flushbarPosition:
-                                                FlushbarPosition.TOP,
-                                          ).show(context);
-                                        })
-                                      }
-                                    else if (value == null)
-                                      {
-                                        Flushbar(
-                                          message:
-                                              "Check Your Field Before Register",
-                                          duration: Duration(seconds: 5),
-                                          backgroundColor: Colors.redAccent,
-                                          flushbarPosition:
-                                              FlushbarPosition.TOP,
-                                        ).show(context)
-                                      }
-                                  });
+                          if (nameController.text.isEmpty ||
+                              profesiController.text.isEmpty ||
+                              emailController.text.isEmpty ||
+                              passwordController.text.isEmpty) {
+                            Flushbar(
+                              message: "Semua field harus diisi!",
+                              duration: Duration(seconds: 3),
+                              backgroundColor: Colors.orange,
+                              flushbarPosition: FlushbarPosition.TOP,
+                            ).show(context);
+                            return;
+                          }
+
+                          var result = await postRegister(
+                            nameController.text,
+                            profesiController.text,
+                            emailController.text,
+                            passwordController.text,
+                          );
+
+                          if (result != null && result["success"] == true) {
+                            setState(() {});
+                            Flushbar(
+                              message: result["message"] ?? "Berhasil Registrasi",
+                              duration: Duration(seconds: 2),
+                              backgroundColor: Colors.green,
+                              flushbarPosition: FlushbarPosition.TOP,
+                            ).show(context);
+                            Navigator.pop(context);
+                          } else {
+                            Flushbar(
+                              message: result?["message"] ?? "Gagal registrasi",
+                              duration: Duration(seconds: 3),
+                              backgroundColor: Colors.red,
+                              flushbarPosition: FlushbarPosition.TOP,
+                            ).show(context);
+                          }
                         },
                         child: Text("Daftar")),
                   ),

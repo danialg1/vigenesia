@@ -4,6 +4,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:dio/dio.dart';
 import 'MainScreens.dart';
 import 'Register.dart';
+import 'ForgotPassword.dart';
 import 'package:flutter/gestures.dart';
 import '../Models/Login_Model.dart';
 import '../Constant/const.dart';
@@ -17,6 +18,7 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   String? nama;
+  bool _obscurePassword = true;
 
   final GlobalKey<FormBuilderState> _fbKey = GlobalKey<FormBuilderState>();
 
@@ -48,6 +50,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -160,7 +163,7 @@ class _LoginState extends State<Login> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // Password Field
+                          // Password Field with visibility toggle
                           Container(
                             decoration: BoxDecoration(
                               color: Color(0xFFF5F9FC),
@@ -172,12 +175,25 @@ class _LoginState extends State<Login> {
                             ),
                             child: TextField(
                               controller: passwordController,
-                              obscureText: true,
+                              obscureText: _obscurePassword,
                               decoration: InputDecoration(
                                 hintText: "Password",
                                 prefixIcon: Icon(
                                   Icons.lock_outline,
                                   color: Color(0xFF1976D2),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Color(0xFF1976D2),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
                                 ),
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(
@@ -254,7 +270,36 @@ class _LoginState extends State<Login> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 15),
+                          // Forgot Password Link
+                          Text.rich(
+                            TextSpan(
+                              text: "Forgot your password? ",
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: 'Reset Here',
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ForgotPassword()));
+                                    },
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1976D2),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 15),
                           // Sign Up Link
                           Text.rich(
                             TextSpan(
