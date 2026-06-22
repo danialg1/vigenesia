@@ -8,7 +8,9 @@ import '../Constant/const.dart';
 import 'edit_page.dart';
 import 'edit_profile.dart';
 import 'package:another_flushbar/flushbar.dart';
-import 'package:intl/intl.dart';
+import 'image_viewer.dart';
+import 'comment_sheet.dart';
+import 'create_post.dart';
 
 class Profile extends StatefulWidget {
   const Profile({Key? key}) : super(key: key);
@@ -216,264 +218,53 @@ class _ProfileState extends State<Profile> {
       }
     });
   }
-
-  // EPIC 4: Nested Comments Bottom Sheet with Reply Support
-  void _showCommentSheet(BuildContext context, String? idMotivasi, String? postOwnerId) {
-    TextEditingController commentController = TextEditingController();
-    String? replyingToCommentId;
-    String? replyingToUserName;
-
+  void _showRepostOptions(BuildContext context, MotivasiModel post) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
-        child: StatefulBuilder(
-          builder: (builderContext, setSheetState) {
-            return Container(
-              height: MediaQuery.of(sheetContext).size.height * 0.7,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text('Komentar', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const Divider(),
-                  Expanded(
-                    child: FutureBuilder(
-                      future: dio.get('$url/comment_get.php?id_motivasi=${idMotivasi ?? ""}'),
-                      builder: (context, AsyncSnapshot snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        }
-                        var commentsRaw = snapshot.data?.data?['data'] ?? [];
-
-                        // EPIC 4: Build nested comment structure
-                        List<Map<String, dynamic>> topLevelComments = [];
-                        Map<String, List<Map<String, dynamic>>> repliesMap = {};
-
-                        for (var c in commentsRaw) {
-                          var comment = c as Map<String, dynamic>? ?? {};
-                          if (comment['parent_id'] == null) {
-                            topLevelComments.add(comment);
-                          } else {
-                            var parentId = comment['parent_id'].toString();
-                            repliesMap.putIfAbsent(parentId, () => []);
-                            repliesMap[parentId]!.add(comment);
-                          }
-                        }
-
-                        if (topLevelComments.isEmpty) {
-                          return const Center(child: Text('Belum ada komentar'));
-                        }
-
-                        return ListView.builder(
-                          itemCount: topLevelComments.length,
-                          itemBuilder: (ctx, index) {
-                            var comment = topLevelComments[index];
-                            var commentId = comment['id']?.toString() ?? '';
-                            var replies = repliesMap[commentId] ?? [];
-                            var isReplying = commentId == replyingToCommentId;
-
-                            return Column(
-                              children: [
-                                // Main comment
-                                _buildCommentTile(
-                                  context: builderContext,
-                                  comment: comment,
-                                  isReply: false,
-                                  onReply: () {
-                                    setSheetState(() {
-                                      replyingToCommentId = commentId;
-                                      replyingToUserName = comment['nama_user']?.toString() ?? 'User';
-                                    });
-                                  },
-                                ),
-                                // EPIC 4: Nested replies with left padding (Twitter-style)
-                                ...replies.map((reply) =>
- Padding(
-                                    padding: const EdgeInsets.only(left: 40.0),
-                                    child: _buildCommentTile(
-                                      context: builderContext,
-                                      comment: reply,
-                                      isReply: true,
-                                      onReply: () {
-                                        setSheetState(() {
-                                          replyingToCommentId = commentId;
-                                          replyingToUserName = reply['nama_user']?.toString() ?? 'User';
-                                        });
-                                      },
-                                    ),
-                                  )
-                                ),
-                                // Reply input field for this comment
-                                if (isReplying)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 56.0, bottom: 8.0),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller: commentController,
-                                            decoration: InputDecoration(
-                                              hintText: "Balas @$replyingToUserName...",
-                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                              isDense: true,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.send, color: Colors.blue, size: 20),
-                                          onPressed: () async {
-                                            if (commentController.text.isEmpty) return;
-                                            try {
-                                              await dio.post('$url/comment_post.php', data: {
-                                                "id_motivasi": idMotivasi ?? "",
-                                                "iduser": iduser ?? "",
-                                                "isi_komentar": commentController.text,
-                                                "parent_id": replyingToCommentId,
-                                              });
-                                              commentController.clear();
-                                              setSheetState(() {
-                                                replyingToCommentId = null;
-                                                replyingToUserName = null;
-                                              });
-                                              Navigator.pop(sheetContext);
-                                              _showCommentSheet(context, idMotivasi, postOwnerId);
-                                            } catch (e) {
-                                              Flushbar(
-                                                message: "Gagal mengirim balasan",
-                                                duration: const Duration(seconds: 2),
-                                                backgroundColor: Colors.red,
-                                                flushbarPosition: FlushbarPosition.TOP,
-                                              ).show(builderContext);
-                                            }
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.grey, size: 20),
-                                          onPressed: () {
-                                            setSheetState(() {
-                                              replyingToCommentId = null;
-                                              replyingToUserName = null;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                const Divider(height: 1),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  const Divider(),
-                  // Main comment input field
-                  if (replyingToCommentId == null)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: commentController,
-                            decoration: InputDecoration(
-                              hintText: "Tulis komentar...",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.send, color: Colors.blue),
-                          onPressed: () async {
-                            if (commentController.text.isEmpty) return;
-                            try {
-                              await dio.post('$url/comment_post.php', data: {
-                                "id_motivasi": idMotivasi ?? "",
-                                "iduser": iduser ?? "",
-                                "isi_komentar": commentController.text,
-                              });
-                              commentController.clear();
-                              if (sheetContext.mounted) Navigator.pop(sheetContext);
-                              _showCommentSheet(context, idMotivasi, postOwnerId);
-                            } catch (e) {
-                              if (builderContext.mounted) {
-                                Flushbar(
-                                  message: "Gagal mengirim komentar",
-                                  duration: const Duration(seconds: 2),
-                                  backgroundColor: Colors.red,
-                                  flushbarPosition: FlushbarPosition.TOP,
-                                ).show(builderContext);
-                              }
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // EPIC 4: Build individual comment tile with profile picture
-  Widget _buildCommentTile({
-    required BuildContext context,
-    required Map<String, dynamic> comment,
-    required bool isReply,
-    required VoidCallback onReply,
-  }) {
-    String? foto = comment['foto']?.toString();
-    String? namaUser = comment['nama_user']?.toString() ?? 'User';
-
-    return ListTile(
-      contentPadding: EdgeInsets.only(left: isReply ? 8 : 0, right: 8),
-      leading: _buildProfileAvatar(foto, namaUser, size: isReply ? 28 : 40),
-      title: Text(
-        namaUser,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: isReply ? 13 : 14,
-        ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            comment['isi_komentar']?.toString() ?? '',
-            style: TextStyle(fontSize: isReply ? 13 : 14),
-          ),
-          const SizedBox(height: 4),
-          Row(
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                _formatDateTime(DateTime.tryParse(comment['tanggal_input']?.toString() ?? '')),
-                style: const TextStyle(color: Colors.grey, fontSize: 11),
+              ListTile(
+                leading: const Icon(Icons.repeat),
+                title: const Text('Posting Ulang'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _repost(post.id, post.isiMotivasi, post.namaUser);
+                },
               ),
-              if (!isReply) ...[
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: onReply,
-                  child: const Text(
-                    'Balas',
-                    style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Kutipan'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  bool? result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CreatePostScreen(
+                        iduser: iduser ?? '',
+                        repostId: post.id,
+                        originalPostData: {
+                          'nama_user': post.namaUser,
+                          'isi_motivasi': post.isiMotivasi,
+                          'foto_motivasi': post.fotoMotivasi,
+                        },
+                      ),
+                    ),
+                  );
+                  if (result == true) {
+                    _refreshPosts();
+                  }
+                },
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+
 
   // EPIC 1: Profile avatar builder with NetworkImage and fallback
   Widget _buildProfileAvatar(String? foto, String? nama, {double size = 40}) {
@@ -505,11 +296,6 @@ class _ProfileState extends State<Profile> {
     return '${date.day} ${_getMonthName(date.month)} ${date.year}';
   }
 
-  String _formatDateTime(DateTime? date) {
-    if (date == null) return '';
-    return DateFormat('dd MMM yyyy, HH:mm').format(date);
-  }
-
   String _getMonthName(int month) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[month - 1];
@@ -520,8 +306,6 @@ class _ProfileState extends State<Profile> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Profile"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         elevation: 1,
       ),
       body: RefreshIndicator(
@@ -534,11 +318,13 @@ class _ProfileState extends State<Profile> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0xFF4FC3F7), Color(0xFF1976D2)],
+                    colors: Theme.of(context).brightness == Brightness.dark
+                        ? [Colors.blueGrey.shade900, Colors.black]
+                        : [const Color(0xFF4FC3F7), const Color(0xFF1976D2)],
                   ),
                 ),
                 child: Column(
@@ -663,158 +449,214 @@ class _ProfileState extends State<Profile> {
                             var item = userPosts[index];
                             bool isLiked = likedPosts.contains(item.id);
                             bool isSaved = savedPosts.contains(item.id);
-                            return Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              child: Padding(
+                            return InkWell(
+                              onTap: () {
+                                // optional: go to detail post
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+                                ),
                                 padding: const EdgeInsets.all(16),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    if (item.repostId != null && item.isiMotivasi!.startsWith('RT '))
+                                      const Padding(
+                                        padding: EdgeInsets.only(bottom: 8, left: 32),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.repeat, color: Colors.grey, size: 14),
+                                            SizedBox(width: 8),
+                                            Text('Kamu memposting ulang', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
                                     Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        // EPIC 1: Profile picture from user table
-                                        _buildProfileAvatar(item.foto, item.namaUser),
+                                        _buildProfileAvatar(item.foto, item.namaUser, size: 40),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                item.namaUser ?? 'User',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 15,
-                                                ),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Row(
+                                                      children: [
+                                                        Text(item.namaUser ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                                        const SizedBox(width: 4),
+                                                        Flexible(
+                                                          child: Text('@${(item.namaUser ?? "user").toLowerCase().replaceAll(' ', '')}', style: const TextStyle(color: Colors.grey, fontSize: 14), overflow: TextOverflow.ellipsis),
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        const Text('·', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                                                        const SizedBox(width: 4),
+                                                        Text(_formatDate(item.tanggalInput), style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  PopupMenuButton<String>(
+                                                    icon: const Icon(Icons.more_vert, color: Colors.grey, size: 18),
+                                                    padding: EdgeInsets.zero,
+                                                    onSelected: (value) async {
+                                                      if (value == 'edit') {
+                                                        Navigator.push(context, MaterialPageRoute(builder: (context) => EditPage(id: item.id, isiMotivasi: item.isiMotivasi))).then((_) => _refreshPosts());
+                                                      } else if (value == 'delete') {
+                                                        _showDeleteDialog(context, item.id);
+                                                      }
+                                                    },
+                                                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                                      const PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
+                                                      const PopupMenuItem<String>(value: 'delete', child: Text('Hapus', style: TextStyle(color: Colors.red))),
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
-                                              Text(
-                                                _formatDate(item.tanggalInput),
-                                                style: const TextStyle(
-                                                  color: Colors.grey,
-                                                  fontSize: 12,
+                                              const SizedBox(height: 4),
+                                              Text(item.isiMotivasi ?? '', style: const TextStyle(fontSize: 15, height: 1.4)),
+                                              
+                                              if (item.fotoMotivasi != null && item.fotoMotivasi!.isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 12),
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewer(imageUrl: '$url/uploads/${item.fotoMotivasi}', heroTag: 'profile_img_${item.id}')));
+                                                    },
+                                                    child: ClipRRect(
+                                                      borderRadius: BorderRadius.circular(16),
+                                                      child: Hero(
+                                                        tag: 'profile_img_${item.id}',
+                                                        child: Image.network(
+                                                          '$url/uploads/${item.fotoMotivasi}',
+                                                          width: double.infinity,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
+
+                                              // Nested Original Post (Quote Tweet)
+                                              if (item.repostId != null && item.originalPost != null && !(item.isiMotivasi!.startsWith('RT ')))
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 12),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(color: Theme.of(context).dividerColor),
+                                                      borderRadius: BorderRadius.circular(16),
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Padding(
+                                                          padding: const EdgeInsets.all(12),
+                                                          child: Row(
+                                                            children: [
+                                                              _buildProfileAvatar(item.originalPost!['foto']?.toString(), item.originalPost!['nama_user']?.toString(), size: 20),
+                                                              const SizedBox(width: 8),
+                                                              Text(item.originalPost!['nama_user']?.toString() ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                                              const SizedBox(width: 4),
+                                                              Text('@${(item.originalPost!['nama_user']?.toString() ?? "user").toLowerCase().replaceAll(' ', '')}', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
+                                                          child: Text(item.originalPost!['isi_motivasi']?.toString() ?? '', style: const TextStyle(fontSize: 14)),
+                                                        ),
+                                                        if (item.originalPost!['foto_motivasi'] != null && item.originalPost!['foto_motivasi'].toString().isNotEmpty)
+                                                          GestureDetector(
+                                                            onTap: () {
+                                                              Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewer(imageUrl: '$url/uploads/${item.originalPost!['foto_motivasi']}', heroTag: 'profile_quote_img_${item.id}')));
+                                                            },
+                                                            child: ClipRRect(
+                                                              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                                                              child: Hero(
+                                                                tag: 'profile_quote_img_${item.id}',
+                                                                child: Image.network(
+                                                                  '$url/uploads/${item.originalPost!['foto_motivasi']}',
+                                                                  width: double.infinity,
+                                                                  fit: BoxFit.cover,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              const SizedBox(height: 12),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  // Comment
+                                                  InkWell(
+                                                    onTap: () {
+                                                      showModalBottomSheet(
+                                                        context: context,
+                                                        isScrollControlled: true,
+                                                        backgroundColor: Colors.transparent,
+                                                        builder: (context) => CommentSheet(
+                                                          post: item,
+                                                          currentUserId: iduser ?? '',
+                                                          currentUserFoto: foto,
+                                                        ),
+                                                      ).then((_) => _refreshPosts());
+                                                    },
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(Icons.chat_bubble_outline, color: Colors.grey, size: 18),
+                                                        const SizedBox(width: 4),
+                                                        Text('${item.totalComments ?? 0}', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // Repost
+                                                  InkWell(
+                                                    onTap: () => _showRepostOptions(context, item),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(Icons.repeat, color: Colors.grey, size: 18),
+                                                        const SizedBox(width: 4),
+                                                        Text('${item.totalReposts ?? 0}', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // Like
+                                                  InkWell(
+                                                    onTap: () => _toggleLike(item.id),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(isLiked ? Icons.favorite : Icons.favorite_border, color: isLiked ? Colors.red : Colors.grey, size: 18),
+                                                        const SizedBox(width: 4),
+                                                        Text('${likeCounts[item.id] ?? 0}', style: TextStyle(color: isLiked ? Colors.red : Colors.grey, fontSize: 13)),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  // Save
+                                                  InkWell(
+                                                    onTap: () => _toggleSave(item.id),
+                                                    child: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: isSaved ? Colors.blue : Colors.grey, size: 18),
+                                                  ),
+                                                  // Share
+                                                  InkWell(
+                                                    onTap: () {
+                                                      SharePlus.instance.share(ShareParams(text: 'Cek motivasi ini: "${item.isiMotivasi}" - dari ${item.namaUser}'));
+                                                    },
+                                                    child: const Icon(Icons.share, color: Colors.grey, size: 18),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
                                         ),
-                                        PopupMenuButton(
-                                          icon: const Icon(Icons.more_vert, color: Colors.grey),
-                                          itemBuilder: (context) => [
-                                            const PopupMenuItem(
-                                              value: 'edit',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.edit, size: 20),
-                                                  SizedBox(width: 8),
-                                                  Text('Edit'),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'delete',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.delete, size: 20, color: Colors.red),
-                                                  SizedBox(width: 8),
-                                                  Text('Delete', style: TextStyle(color: Colors.red)),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                          onSelected: (value) {
-                                            if (value == 'edit') {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => EditPage(
-                                                    id: item.id,
-                                                    isiMotivasi: item.isiMotivasi,
-                                                  ),
-                                                ),
-                                              ).then((_) => _refreshPosts());
-                                            } else if (value == 'delete') {
-                                              _showDeleteDialog(context, item.id);
-                                            }
-                                          },
-                                        ),
                                       ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      item.isiMotivasi ?? '',
-                                      style: const TextStyle(fontSize: 15, height: 1.4),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          // Comment
-                                          InkWell(
-                                            onTap: () => _showCommentSheet(context, item.id, item.iduser),
-                                            borderRadius: BorderRadius.circular(20),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Row(
-                                                children: [
-                                                  const Icon(Icons.chat_bubble_outline, color: Colors.grey, size: 20),
-                                                  const SizedBox(width: 4),
-                                                  Text('${item.totalComments ?? 0}', style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          // Repost
-                                          InkWell(
-                                            onTap: () => _repost(item.id, item.isiMotivasi, item.namaUser),
-                                            borderRadius: BorderRadius.circular(20),
-                                            child: const Padding(
-                                              padding: EdgeInsets.all(8.0),
-                                              child: Icon(Icons.repeat, color: Colors.grey, size: 20),
-                                            ),
-                                          ),
-                                          // Like
-                                          InkWell(
-                                            onTap: () => _toggleLike(item.id),
-                                            borderRadius: BorderRadius.circular(20),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Row(
-                                                children: [
-                                                  Icon(isLiked ? Icons.favorite : Icons.favorite_border,
-                                                      color: isLiked ? Colors.red : Colors.grey, size: 20),
-                                                  const SizedBox(width: 4),
-                                                  Text('${likeCounts[item.id] ?? 0}',
-                                                      style: TextStyle(color: isLiked ? Colors.red : Colors.grey, fontSize: 13)),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          // Save
-                                          InkWell(
-                                            onTap: () => _toggleSave(item.id),
-                                            borderRadius: BorderRadius.circular(20),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border,
-                                                  color: isSaved ? Colors.orange : Colors.grey, size: 20),
-                                            ),
-                                          ),
-                                          // Share
-                                          InkWell(
-                                            onTap: () {
-                                              SharePlus.instance.share(ShareParams(
-                                                  text: 'Cek motivasi keren ini di Vigenesia: "${item.isiMotivasi}" - dari ${item.namaUser}'));
-                                            },
-                                            borderRadius: BorderRadius.circular(20),
-                                            child: const Padding(
-                                              padding: EdgeInsets.all(8.0),
-                                              child: Icon(Icons.share, color: Colors.grey, size: 20),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                                     ),
                                   ],
                                 ),
@@ -855,33 +697,37 @@ class _ProfileState extends State<Profile> {
   void _showDeleteDialog(BuildContext context, String? postId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("Hapus Post"),
         content: const Text("Apakah kamu yakin ingin menghapus post ini?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text("Batal"),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               try {
-                await dio.delete(
+                var response = await dio.delete(
                   '$url/motivasi_delete.php',
                   data: {"id": postId},
-                  options: Options(
-                    contentType: Headers.formUrlEncodedContentType,
-                    headers: {"Content-type": "application/json"},
-                  ),
                 );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Post berhasil dihapus"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                _refreshPosts();
+                if (response.statusCode == 200 && response.data['status'] == 'success') {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Post berhasil dihapus"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    setState(() {
+                      userPosts.removeWhere((item) => item.id == postId);
+                    });
+                  }
+                } else {
+                  throw Exception('Failed to delete on server');
+                }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

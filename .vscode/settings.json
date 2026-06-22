@@ -1,0 +1,5 @@
+{
+    "dart.flutterRunAdditionalArgs": [
+        "--android-skip-build-dependency-validation"
+    ]
+}

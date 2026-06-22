@@ -87,7 +87,7 @@ class _EditProfileState extends State<EditProfile> {
                             child: Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 4),
+                                border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 4),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.2),

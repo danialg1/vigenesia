@@ -21,9 +21,14 @@ class MotivasiModel {
     this.iduser,
     this.namaUser,
     this.foto,
+    this.fotoMotivasi,
+    this.repostId,
+    this.originalPost,
     this.profesi,
     this.totalLikes,
+    this.totalReposts,
     this.isLiked,
+    this.isBookmarked,
     this.totalComments,
     this.userReaction,
     this.reactionCounts,
@@ -37,9 +42,14 @@ class MotivasiModel {
   String? iduser;
   String? namaUser;
   String? foto; // EPIC 1: Profile picture from user table
+  String? fotoMotivasi; // EPIC 5: Post image
+  String? repostId;
+  Map<String, dynamic>? originalPost;
   String? profesi;
   String? totalLikes;
+  String? totalReposts;
   bool? isLiked;
+  bool? isBookmarked;
   String? totalComments;
   String? userReaction;
   Map<String, int>? reactionCounts;
@@ -62,13 +72,21 @@ class MotivasiModel {
         tanggalUpdate: json["tanggal_update"]?.toString(),
         iduser: json["iduser"]?.toString(),
         namaUser: json["nama_user"]?.toString(),
-        foto: json["foto"]?.toString(), // EPIC 1: Profile picture
+        foto: json["foto"]?.toString(),
+        fotoMotivasi: json["foto_motivasi"]?.toString(),
+        repostId: json["repost_id"]?.toString(),
+        originalPost: json["original_post"] != null ? Map<String, dynamic>.from(json["original_post"]) : null,
         profesi: json["profesi"]?.toString(),
         totalLikes: json["total_likes"]?.toString() ?? '0',
+        totalReposts: json["total_reposts"]?.toString() ?? '0',
         isLiked: json["is_liked"] == true ||
                  json["is_liked"] == "true" ||
                  json["is_liked"] == 1 ||
                  json["is_liked"] == "1",
+        isBookmarked: json["is_bookmarked"] == true ||
+                      json["is_bookmarked"] == "true" ||
+                      json["is_bookmarked"] == 1 ||
+                      json["is_bookmarked"] == "1",
         totalComments: json["total_comments"]?.toString() ?? '0',
         userReaction: json["user_reaction"]?.toString(),
         reactionCounts: counts,
@@ -85,9 +103,14 @@ class MotivasiModel {
         "iduser": iduser,
         "nama_user": namaUser,
         "foto": foto,
+        "foto_motivasi": fotoMotivasi,
+        "repost_id": repostId,
+        "original_post": originalPost,
         "profesi": profesi,
         "total_likes": totalLikes,
+        "total_reposts": totalReposts,
         "is_liked": isLiked,
+        "is_bookmarked": isBookmarked,
         "total_comments": totalComments,
         "user_reaction": userReaction,
         "reaction_counts": reactionCounts,

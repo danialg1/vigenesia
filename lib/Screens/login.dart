@@ -96,16 +96,18 @@ class _LoginState extends State<Login> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF4FC3F7), // Light blue
-              Color(0xFF1976D2), // Primary blue
-              Color(0xFF0D47A1), // Dark blue
-            ],
-            stops: [0.0, 0.5, 1.0],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [Colors.blueGrey.shade900, Colors.black, Colors.black]
+                : [
+                    const Color(0xFF4FC3F7), // Light blue
+                    const Color(0xFF1976D2), // Primary blue
+                    const Color(0xFF0D47A1), // Dark blue
+                  ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -152,7 +154,7 @@ class _LoginState extends State<Login> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
@@ -167,23 +169,23 @@ class _LoginState extends State<Login> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
+                          Text(
                             "Sign In",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1976D2),
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.blue.shade300 : const Color(0xFF1976D2),
                             ),
                           ),
                           const SizedBox(height: 30),
                           // Email Field
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5F9FC),
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade900 : const Color(0xFFF5F9FC),
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: const Color(0xFFE0E0E0),
+                                color: Theme.of(context).dividerColor,
                                 width: 1,
                               ),
                             ),
@@ -208,10 +210,10 @@ class _LoginState extends State<Login> {
                           // Password Field with visibility toggle
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5F9FC),
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade900 : const Color(0xFFF5F9FC),
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: const Color(0xFFE0E0E0),
+                                color: Theme.of(context).dividerColor,
                                 width: 1,
                               ),
                             ),

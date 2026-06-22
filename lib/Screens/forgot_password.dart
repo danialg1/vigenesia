@@ -164,16 +164,18 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF4FC3F7),
-              Color(0xFF1976D2),
-              Color(0xFF0D47A1),
-            ],
-            stops: [0.0, 0.5, 1.0],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [Colors.blueGrey.shade900, Colors.black, Colors.black]
+                : [
+                    const Color(0xFF4FC3F7),
+                    const Color(0xFF1976D2),
+                    const Color(0xFF0D47A1),
+                  ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -219,7 +221,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
@@ -236,10 +238,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5F9FC),
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade900 : const Color(0xFFF5F9FC),
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: const Color(0xFFE0E0E0),
+                                color: Theme.of(context).dividerColor,
                                 width: 1,
                               ),
                             ),

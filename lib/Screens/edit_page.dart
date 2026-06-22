@@ -19,16 +19,20 @@ class EditPage extends StatefulWidget {
 class _EditPageState extends State<EditPage> {
   var dio = Dio(BaseOptions(headers: {'ngrok-skip-browser-warning': '69420'}));
   Future<dynamic> putPost(String isiMotivasi, String ids) async {
-    Map<String, dynamic> data = {"isi_motivasi": isiMotivasi, "id": ids};
-    var response = await dio.put('$url/motivasi_update.php',
-        data: data,
-        options: Options(
-          contentType: Headers.formUrlEncodedContentType,
-        ));
+    try {
+      Map<String, dynamic> data = {"isi_motivasi": isiMotivasi, "id": ids};
+      var response = await dio.put('$url/motivasi_update.php',
+          data: data,
+          options: Options(
+            contentType: Headers.formUrlEncodedContentType,
+          ));
 
-    debugPrint("---> ${response.data} + ${response.statusCode}");
-
-    return response.data;
+      debugPrint("---> ${response.data} + ${response.statusCode}");
+      return response.data;
+    } catch (e) {
+      debugPrint("Update error: $e");
+      return null;
+    }
   }
 
   TextEditingController isiMotivasiC = TextEditingController();

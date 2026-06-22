@@ -28,6 +28,7 @@ class _NotificationPageState extends State<NotificationPage> {
     setState(() => isLoading = true);
     try {
       var response = await dio.get('$url/notif_get.php?user_id=${widget.iduser ?? ""}');
+      if (!mounted) return;
       if (response.statusCode == 200 && response.data['status'] == 'success') {
         var notifList = (response.data['data'] as List)
             .map((i) => NotificationModel.fromJson(i))
@@ -40,6 +41,7 @@ class _NotificationPageState extends State<NotificationPage> {
     } catch (e) {
       debugPrint("Error loading notifications: $e");
     }
+    if (!mounted) return;
     setState(() => isLoading = false);
   }
 
@@ -155,8 +157,6 @@ class _NotificationPageState extends State<NotificationPage> {
             ],
           ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         elevation: 1,
         actions: [
           if (_notifications.isNotEmpty)
