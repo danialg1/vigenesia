@@ -16,10 +16,9 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   final TextEditingController _emailController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  bool _obscureEmail = false;
 
   Future<Map<String, dynamic>?> sendResetCode(String email) async {
-    var dio = Dio();
+    var dio = Dio(BaseOptions(headers: {'ngrok-skip-browser-warning': '69420'}));
 
     try {
       final response = await dio.post(
@@ -27,12 +26,12 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         data: {"email": email},
         options: Options(
           headers: {'Content-type': 'application/json'},
-          receiveTimeout: Duration(seconds: 30),
-          sendTimeout: Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
         ),
       );
 
-      print("Response -> ${response.data} + ${response.statusCode}");
+      debugPrint("Response -> ${response.data} + ${response.statusCode}");
 
       if (response.statusCode == 200) {
         return {
@@ -90,7 +89,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
     } else {
       Flushbar(
         message: result?["message"] ?? "Failed to send reset code",
-        duration: Duration(seconds: 4),
+        duration: const Duration(seconds: 4),
         backgroundColor: Colors.redAccent,
         flushbarPosition: FlushbarPosition.TOP,
       ).show(context);
@@ -102,7 +101,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 8),
@@ -114,7 +113,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(message),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               'Please check your email and follow the instructions to reset your password.',
               style: TextStyle(fontSize: 13, color: Colors.grey[600]),
@@ -127,7 +126,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: Text('Back to Login'),
+            child: const Text('Back to Login'),
           ),
         ],
       ),
@@ -138,7 +137,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   void initState() {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
+      const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
@@ -150,7 +149,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   void dispose() {
     _emailController.dispose();
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
+      const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
@@ -165,7 +164,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -188,17 +187,17 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.lock_reset,
                       size: 50,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Text(
+                  const Text(
                     "Forgot Password",
                     style: TextStyle(
                       fontSize: 32,
@@ -212,7 +211,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                   const SizedBox(height: 50),
@@ -224,9 +223,9 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 20,
-                          offset: Offset(0, 10),
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
@@ -237,10 +236,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Color(0xFFF5F9FC),
+                              color: const Color(0xFFF5F9FC),
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: Color(0xFFE0E0E0),
+                                color: const Color(0xFFE0E0E0),
                                 width: 1,
                               ),
                             ),
@@ -257,7 +256,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                 }
                                 return null;
                               },
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 hintText: "Email",
                                 prefixIcon: Icon(
                                   Icons.email_outlined,
@@ -276,7 +275,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             width: double.infinity,
                             height: 56,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
+                              gradient: const LinearGradient(
                                 colors: [
                                   Color(0xFF42A5F5),
                                   Color(0xFF1976D2),
@@ -287,9 +286,9 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Color(0xFF1976D2).withOpacity(0.4),
+                                  color: const Color(0xFF1976D2).withValues(alpha: 0.4),
                                   blurRadius: 10,
-                                  offset: Offset(0, 5),
+                                  offset: const Offset(0, 5),
                                 ),
                               ],
                             ),
@@ -303,7 +302,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                 ),
                               ),
                               child: _isLoading
-                                  ? SizedBox(
+                                  ? const SizedBox(
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
@@ -313,7 +312,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                         ),
                                       ),
                                     )
-                                  : Text(
+                                  : const Text(
                                       "Send Reset Link",
                                       style: TextStyle(
                                         fontSize: 18,
@@ -338,7 +337,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                     ..onTap = () {
                                       Navigator.pop(context);
                                     },
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF1976D2),
                                     fontSize: 14,

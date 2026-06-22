@@ -16,7 +16,7 @@ class _RegisterState extends State<Register> {
 
   Future<Map<String, dynamic>?> postRegister(
       String nama, String profesi, String email, String password) async {
-    var dio = Dio();
+    var dio = Dio(BaseOptions(headers: {'ngrok-skip-browser-warning': '69420'}));
 
     try {
       final response = await dio.post(
@@ -30,12 +30,12 @@ class _RegisterState extends State<Register> {
         },
         options: Options(
           headers: {'Content-type': 'application/json'},
-          receiveTimeout: Duration(seconds: 30),
-          sendTimeout: Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
         ),
       );
 
-      print("Respon -> ${response.data} + ${response.statusCode}");
+      debugPrint("Respon -> ${response.data} + ${response.statusCode}");
 
       if (response.statusCode == 200) {
         return {
@@ -86,44 +86,44 @@ class _RegisterState extends State<Register> {
       body: SingleChildScrollView(
         child: SafeArea(
           child: Center(
-            child: Container(
+            child: SizedBox(
               width: MediaQuery.of(context).size.width / 1.3,
               height: MediaQuery.of(context).size.height,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  const Text(
                     "Register Your Account",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
                   ),
-                  SizedBox(height: 50),
+                  const SizedBox(height: 50),
                   FormBuilderTextField(
                     name: "name",
                     controller: nameController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                         contentPadding: EdgeInsets.only(left: 10),
                         border: OutlineInputBorder(),
                         labelText: "Nama"),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   FormBuilderTextField(
                     name: "profesi",
                     controller: profesiController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                         contentPadding: EdgeInsets.only(left: 10),
                         border: OutlineInputBorder(),
                         labelText: "Profesi"),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   FormBuilderTextField(
                     name: "email",
                     controller: emailController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                         contentPadding: EdgeInsets.only(left: 10),
                         border: OutlineInputBorder(),
                         labelText: "Email"),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   StatefulBuilder(
@@ -133,15 +133,15 @@ class _RegisterState extends State<Register> {
                         name: "password",
                         controller: passwordController,
                         decoration: InputDecoration(
-                          contentPadding: EdgeInsets.only(left: 10, right: 10),
-                          border: OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.only(left: 10, right: 10),
+                          border: const OutlineInputBorder(),
                           labelText: "Password",
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: Color(0xFF1976D2),
+                              color: const Color(0xFF1976D2),
                             ),
                             onPressed: () {
                               setState(() {
@@ -153,10 +153,10 @@ class _RegisterState extends State<Register> {
                       );
                     },
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 30,
                   ),
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width,
                     child: ElevatedButton(
                         onPressed: () async {
@@ -166,7 +166,7 @@ class _RegisterState extends State<Register> {
                               passwordController.text.isEmpty) {
                             Flushbar(
                               message: "Semua field harus diisi!",
-                              duration: Duration(seconds: 3),
+                              duration: const Duration(seconds: 3),
                               backgroundColor: Colors.orange,
                               flushbarPosition: FlushbarPosition.TOP,
                             ).show(context);
@@ -184,21 +184,24 @@ class _RegisterState extends State<Register> {
                             setState(() {});
                             Flushbar(
                               message: result["message"] ?? "Berhasil Registrasi",
-                              duration: Duration(seconds: 2),
+                              duration: const Duration(seconds: 2),
                               backgroundColor: Colors.green,
                               flushbarPosition: FlushbarPosition.TOP,
                             ).show(context);
-                            Navigator.pop(context);
+                            await Future.delayed(const Duration(seconds: 2));
+                            if (mounted) {
+                              Navigator.pop(context);
+                            }
                           } else {
                             Flushbar(
                               message: result?["message"] ?? "Gagal registrasi",
-                              duration: Duration(seconds: 3),
+                              duration: const Duration(seconds: 3),
                               backgroundColor: Colors.red,
                               flushbarPosition: FlushbarPosition.TOP,
                             ).show(context);
                           }
                         },
-                        child: Text("Daftar")),
+                        child: const Text("Daftar")),
                   ),
                 ],
               ),

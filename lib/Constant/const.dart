@@ -1,5 +1,10 @@
-//String url = "http://192.168.43.185";
+// Android Emulator: Use 10.0.2.2 to access localhost
 String url = "https://aleen-pseudoanaphylactic-bewailingly.ngrok-free.dev/vigenesia";
-// String url = "http://192.168.1.9";
 
-// Change This For Different IP
+// For real device/testing with ngrok:
+
+// Current active URL - Android Emulator
+// Change This For Different IP / Environment
+// Android Emulator -> http://10.0.2.2
+// iOS Simulator -> http://localhost
+// Real Device -> Use ngrok or your public IP
